@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DISK="/dev/vda"
+PART="/dev/vda2"
+ROOT_MOUNT="/"
+
+echo "== Estado antes =="
+lsblk
+df -h
+
+echo "== Expandindo a partição 2 do disco ${DISK} =="
+growpart "${DISK}" 2
+
+echo "== Recarregando tabela de partições =="
+partprobe "${DISK}"
+udevadm settle
+
+echo "== Ajustando PV do LVM =="
+pvresize "${PART}"
+
+ROOT_LV="$(findmnt -no SOURCE /)"
+ROOT_FS="$(findmnt -no FSTYPE /)"
+
+echo "Root LV: ${ROOT_LV}"
+echo "Root FS: ${ROOT_FS}"
+
+echo "== Expandindo o logical volume =="
+lvextend -l +100%FREE "${ROOT_LV}"
+
+echo "== Expandindo o filesystem =="
+if [[ "${ROOT_FS}" == "xfs" ]]; then
+  xfs_growfs "${ROOT_MOUNT}"
+elif [[ "${ROOT_FS}" == "ext4" || "${ROOT_FS}" == "ext3" ]]; then
+  resize2fs "${ROOT_LV}"
+else
+  echo "Filesystem ${ROOT_FS} não tratado automaticamente."
+  exit 1
+fi
+
+echo "== Estado final =="
+lsblk
+df -h
