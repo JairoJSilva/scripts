@@ -5,30 +5,30 @@ DISK="/dev/vda"
 PART="/dev/vda2"
 ROOT_MOUNT="/"
 
-echo "== Estado antes =="
+  echo "== Estado antes =="
 lsblk
 df -h
 
-echo "== Expandindo a partição 2 do disco ${DISK} =="
+  echo "== Expandindo a partição 2 do disco ${DISK} =="
 growpart "${DISK}" 2
 
-echo "== Recarregando tabela de partições =="
+  echo "== Recarregando tabela de partições =="
 partprobe "${DISK}"
 udevadm settle
 
-echo "== Ajustando PV do LVM =="
+  echo "== Ajustando PV do LVM =="
 pvresize "${PART}"
 
 ROOT_LV="$(findmnt -no SOURCE /)"
 ROOT_FS="$(findmnt -no FSTYPE /)"
 
-echo "Root LV: ${ROOT_LV}"
-echo "Root FS: ${ROOT_FS}"
+  echo "Root LV: ${ROOT_LV}"
+  echo "Root FS: ${ROOT_FS}"
 
-echo "== Expandindo o logical volume =="
+  echo "== Expandindo o logical volume =="
 lvextend -l +100%FREE "${ROOT_LV}"
 
-echo "== Expandindo o filesystem =="
+  echo "== Expandindo o filesystem =="
 if [[ "${ROOT_FS}" == "xfs" ]]; then
   xfs_growfs "${ROOT_MOUNT}"
 elif [[ "${ROOT_FS}" == "ext4" || "${ROOT_FS}" == "ext3" ]]; then
@@ -38,6 +38,6 @@ else
   exit 1
 fi
 
-echo "== Estado final =="
+  echo "== Estado final =="
 lsblk
 df -h
