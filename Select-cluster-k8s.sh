@@ -30,10 +30,22 @@ select_k8s_context() {
         # Obter o nome do contexto escolhido
         chosen_context=$(echo "$contexts" | sed -n "${context_number}p")
 
-        # Configurar o contexto escolhido
-        kubectl config use-context "$chosen_context"
+        # Configurar o contexto escolhido (redirecionando saída padrão para não poluir a tela)
+        kubectl config use-context "$chosen_context" > /dev/null
 
-        echo "Contexto alterado para: $chosen_context"
+        # Arte ASCII de BEM VINDO
+        echo -e "\033[1;36m"
+        cat << "EOF"
+ ____  _____ __  __   __     _____ _   _ ____   ___
+| __ )| ____|  \/  |  \ \   / /_ _| \ | |  _ \ / _ \
+|  _ \|  _| | |\/| |   \ \ / / | ||  \| | | | | | | |
+| |_) | |___| |  | |    \ V /  | || |\  | |_| | |_| |
+|____/|_____|_|  |_|     \_/  |___|_| \_|____/ \___/
+EOF
+        echo -e "\033[0m"
+
+        # Mostra o nome do cluster
+        echo -e "Ao cluster: \033[1;32m$chosen_context\033[0m\n"
     else
         echo "Escolha inválida."
         exit 1
@@ -42,7 +54,3 @@ select_k8s_context() {
 
 # Chamar a função
 select_k8s_context
-
-
-# Mostrar namespaces para garantir qual cluster foi selecionado
-#kubectl get namespaces -o custom-columns=:metadata.name
